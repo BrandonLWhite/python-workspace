@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "python-workspace"
+version = "0.1.0"
+description = ""
+authors = ["BrandonLWhite <brandonlwhite@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.scripts]
+pyworks = "python_workspace.main:main"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+tomli = "^2.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

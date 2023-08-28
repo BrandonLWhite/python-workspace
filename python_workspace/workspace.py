@@ -4,6 +4,7 @@ from functools import cached_property
 from pathlib import Path
 
 from .project import Project
+from .parallel_exec import run_project_command_parallel
 
 @dataclass
 class Workspace:
@@ -24,3 +25,6 @@ class Workspace:
         return [
             project for project in self.projects if project.is_poetry_project
         ]
+
+    async def run_project_command_parallel(self, command: str):
+        await run_project_command_parallel(self.poetry_projects, command)

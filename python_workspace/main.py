@@ -1,9 +1,6 @@
 """
 TODO:
-- Reusable parallel process loop
 - CLI parser
-- install command (async)
-- test command (async)
 - list command
 """
 import argparse
@@ -17,55 +14,45 @@ POETRY_BASE_COMMAND = "poetry --ansi"
 
 def main():
     argparser = argparse.ArgumentParser(description='TODO Description')
-    argparser.add_argument('operation', choices=['install', 'test', 'list', 'lock', 'recreate', 'remove'])
+    argparser.add_argument('operation', choices=['install', 'test', 'list', 'lock', 'recreate', 'remove', 'exec'])
     argparser.add_argument('--path')
-    argparser.add_argument('pass-through', nargs=argparse.REMAINDER)
+    argparser.add_argument('passthrough', nargs=argparse.REMAINDER)
     args = argparser.parse_args()
 
     workspace_root = Path.cwd()
     workspace = Workspace(workspace_root)
 
-    asyncio.run(run_operation(args.operation, workspace))
+    asyncio.run(run_operation(args.operation, args.passthrough, workspace))
 
 
-async def run_operation(operation: str, workspace: Workspace):
+async def run_operation(operation: str, passthrough_args: list[str], workspace: Workspace):
     if operation == 'install':
         await install_projects(workspace)
     elif operation == 'test':
         await test_projects(workspace)
     elif operation == 'lock':
-        await run_project_command_parallel(workspace.poetry_projects, f"{POETRY_BASE_COMMAND} lock --no-update")
+        await workspace.run_project_command_parallel(f"{POETRY_BASE_COMMAND} lock --no-update")
     elif operation == 'remove':
-        await run_project_command_parallel(workspace.poetry_projects, f"{POETRY_BASE_COMMAND} env remove --all")
+        await remove_all_venvs(workspace)
     elif operation == 'recreate':
-        # TODO
-        pass
-
-
-async def run_project_command_parallel(projects: list[Project], command: str):
-    tasks = []
-    for project in projects:
-        process = await asyncio.create_subprocess_shell(
-            command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            cwd=project.root_path)
-        tasks.append(tail_output_async(process.stdout, project.name))
-        tasks.append(tail_output_async(process.stderr, project.name))
-        tasks.append(process.wait())
-
-    await asyncio.gather(*tasks)
-
-
-async def tail_output_async(stream, label: str):
-    async for line in stream:
-        print(f"{label}: {line.decode().strip()}")
+        await recreate_all_venvs(workspace)
+    elif operation == 'exec':
+        await workspace.run_project_command_parallel(" ".join(passthrough_args))
 
 
 async def install_projects(workspace: Workspace):
-    await run_project_command_parallel(workspace.poetry_projects, f"{POETRY_BASE_COMMAND} install")
+    await workspace.run_project_command_parallel(f"{POETRY_BASE_COMMAND} install")
+
+
+async def recreate_all_venvs(workspace: Workspace):
+    await remove_all_venvs(workspace)
+    await install_projects(workspace)
+
+
+async def remove_all_venvs(workspace: Workspace):
+    await workspace.run_project_command_parallel(f"{POETRY_BASE_COMMAND} env remove --all")
 
 
 async def test_projects(workspace: Workspace):
     # TODO -- Add way for the Project to specify what command to run for the test.
-    await run_project_command_parallel(workspace.poetry_projects, f"{POETRY_BASE_COMMAND} run pytest --color=yes")
+    await workspace.run_project_command_parallel(f"{POETRY_BASE_COMMAND} run pytest --color=yes")

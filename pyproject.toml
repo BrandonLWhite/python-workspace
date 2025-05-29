@@ -9,8 +9,7 @@ readme = "README.md"
 pyworks = "python_workspace.main:main"
 
 [tool.poetry.dependencies]
-python = "^3.9"
-tomli = "^2.0.1"
+python = "^3.11"
 
 [build-system]
 requires = ["poetry-core"]

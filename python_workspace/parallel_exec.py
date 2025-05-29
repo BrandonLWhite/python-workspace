@@ -1,18 +1,31 @@
+import dataclasses
 import asyncio
+import os
 
 from .project import Project
 
 
-async def run_project_command_parallel(projects: list[Project], command: str):
+@dataclasses.dataclass
+class ProjectCommand:
+    project: Project
+    command: str
+
+
+async def run_project_commands_parallel(project_commands: list[ProjectCommand]):
     tasks = []
-    for project in projects:
+    for project_command in project_commands:
+        env = os.environ.copy()
+        env.pop("VIRTUAL_ENV", None)  # Ensure VIRTUAL_ENV is not set
+
         process = await asyncio.create_subprocess_shell(
-            command,
+            project_command.command,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            cwd=project.root_path)
-        tasks.append(tail_output_async(process.stdout, project.name))
-        tasks.append(tail_output_async(process.stderr, project.name))
+            cwd=str(project_command.project.root_path),
+            env=env
+        )
+        tasks.append(tail_output_async(process.stdout, project_command.project.name))
+        tasks.append(tail_output_async(process.stderr, project_command.project.name))
         tasks.append(process.wait())
 
     await asyncio.gather(*tasks)

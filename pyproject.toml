@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "python-workspace"
 version = "0.1.0"
-description = ""
+description = "Python CLI script to help execute operations on multi-project Python monorepos"
 authors = ["BrandonLWhite <brandonlwhite@gmail.com>"]
 readme = "README.md"
 

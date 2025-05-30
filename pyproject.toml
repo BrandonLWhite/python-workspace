@@ -11,6 +11,16 @@ pyworks = "python_workspace.main:main"
 [tool.poetry.dependencies]
 python = "^3.11"
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pipx-install]
+poetry = "==2.1.3"
+poethepoet = "==0.34.0"
+
+[tool.poe.tasks]
+test = "pytest"
